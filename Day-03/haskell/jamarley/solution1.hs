@@ -8,7 +8,7 @@
          
 -}
 
-import Data.Char (isDigit)
+import Data.Char (isDigit, digitToInt)
 import Data.List (elemIndices, nub, transpose)
 
 symbolList :: [String] -> [[Int]]
@@ -23,6 +23,16 @@ findSymbol x
 digitList :: String -> [Int]
 digitList str = [x | (char, x) <- zip str [0..], isDigit char]
 
+digitMap :: [Int] -> [[Int]]
+digitMap (x:y:z:xs)
+        | y == x + 1 && z == y + 1 = [x, y, z] : digitMap xs
+        | y == x + 1 = [x, y] : digitMap (z:xs)
+        | otherwise = digitMap (y:z:xs)
+digitMap [x, y]
+        | y == x + 1 = [[x,y]]
+        | otherwise = []
+digitMap _ = []
+
 overlap :: [Int] -> [Int] -> [Int]
 overlap xs [] = xs
 overlap [] xs = xs
@@ -31,6 +41,12 @@ overlap (x:xs) (y:ys)
         | x < y = x : overlap xs (y:ys)
         | otherwise = x : overlap xs ys
 
+contains :: [[Int]] -> [[Int]] -> [[Int]]
+contains (x:xs) (y:ys)
+        | not $ all (`elem` y) x = y : contains xs ys
+        | otherwise = contains xs ys
+contains _ _ = []
+
 main :: IO ()
 main = do
         content <- readFile "inputtest"
@@ -38,6 +54,11 @@ main = do
         let symbols = symbolList (lines content)
         let shiftBack = [] : init symbols 
         let shiftForward = tail symbols ++ [[]]
-        print (zipWith overlap (zipWith overlap shiftForward symbols) shiftBack)
-        print symbols
+        let symbolsFull = zipWith overlap (zipWith overlap shiftForward symbols) shiftBack
+        let numList = map (digitMap . digitList) (lines content)
+        -- print (zipWith overlap (zipWith overlap shiftForward symbols) shiftBack)
+        print symbolsFull
         print (map digitList (lines content))
+        print ()
+        print numList
+        print (map (contains symbols) numList)
