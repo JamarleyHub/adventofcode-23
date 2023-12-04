@@ -41,24 +41,27 @@ overlap (x:xs) (y:ys)
         | x < y = x : overlap xs (y:ys)
         | otherwise = x : overlap xs ys
 
-contains :: [[Int]] -> [[Int]] -> [[Int]]
-contains (x:xs) (y:ys)
-        | not $ all (`elem` y) x = y : contains xs ys
-        | otherwise = contains xs ys
-contains _ _ = []
+contains :: [Int] -> [[Int]] -> [[Int]]
+contains xs (y:ys)
+         | any (`elem` xs) y = contains xs ys
+         | otherwise = y : contains xs ys
+contains _ [] = []
+
+revert :: [String] -> [[Int]] -> [Char]
+revert strings intLists =
+  concatMap (\(lst, str) -> map (str !!) lst) (zip intLists strings)
+ 
 
 main :: IO ()
 main = do
         content <- readFile "inputtest"
-        print content
+        putStrLn content
         let symbols = symbolList (lines content)
-        let shiftBack = [] : init symbols 
-        let shiftForward = tail symbols ++ [[]]
-        let symbolsFull = zipWith overlap (zipWith overlap shiftForward symbols) shiftBack
-        let numList = map (digitMap . digitList) (lines content)
-        -- print (zipWith overlap (zipWith overlap shiftForward symbols) shiftBack)
-        print symbolsFull
-        print (map digitList (lines content))
+            shiftBack = [] : init symbols 
+            shiftForward = tail symbols ++ [[]]
+            symbolsFull = zipWith overlap (zipWith overlap shiftForward symbols) shiftBack
+            numList = map (digitMap . digitList) (lines content)
+            leftover = zipWith contains symbolsFull numList
+        --print (map digitList (lines content))
+        print (zipWith revert [lines content] leftover)
         print ()
-        print numList
-        print (map (contains symbols) numList)
